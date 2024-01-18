@@ -25,7 +25,7 @@ provider "aws" {
 resource "aws_instance" "instance_1" {
   ami             = "ami-01402852f45db7cf2" 
   instance_type   = "t2.micro"
-  security_groups = [aws_security_group.instances.name]
+  vpc_security_group_ids = [aws_security_group.instances.id]
   subnet_id       = "subnet-0176b34335c62161d"
   user_data       = <<-EOF
               #!/bin/bash
@@ -37,7 +37,7 @@ resource "aws_instance" "instance_1" {
 resource "aws_instance" "instance_2" {
   ami             = "ami-01402852f45db7cf2"
   instance_type   = "t2.micro"
-  security_groups = [aws_security_group.instances.name]
+  vpc_security_group_ids = [aws_security_group.instances.id]
   subnet_id       = "subnet-0176b34335c62161d"
   user_data       = <<-EOF
               #!/bin/bash
