@@ -1,7 +1,7 @@
 terraform {
   # Assumes s3 bucket and dynamo DB table already set up
   # See /code/03-basics/aws-backend
-  cloud {
+  backend "remote" {
     organization = "nineteen17"
 
     workspaces {
@@ -18,13 +18,8 @@ terraform {
 }
 
 provider "aws" {
+  #profile = "terraform-profile"
   region = "ap-southeast-2"
-
-  assume_role {
-    role_arn = "arn:aws:iam::287669651931:role/TerraformManagementRole"
-  }
-
-  shared_credentials_files = [var.AWS_CONFIG_FILE]
 }
 
 resource "aws_instance" "instance_1" {
