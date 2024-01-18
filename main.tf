@@ -26,6 +26,7 @@ resource "aws_instance" "instance_1" {
   ami             = "ami-01402852f45db7cf2" 
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.instances.name]
+  subnet_id       = "subnet-0176b34335c62161d"
   user_data       = <<-EOF
               #!/bin/bash
               echo "Hello, World 1" > index.html
@@ -37,6 +38,7 @@ resource "aws_instance" "instance_2" {
   ami             = "ami-01402852f45db7cf2"
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.instances.name]
+  subnet_id       = "subnet-0176b34335c62161d"
   user_data       = <<-EOF
               #!/bin/bash
               echo "Hello, World 2" > index.html
@@ -69,10 +71,19 @@ data "aws_vpc" "default_vpc" {
   default = true
 }
 
-data "aws_subnets" "default_subnet" {
+data "aws_subnets" "default_vpc_subnets" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.default_vpc.id]
+  }
+}
+
+resource "aws_db_subnet_group" "default_vpc_db_subnet_group" {
+  name       = "my-default-vpc-db-subnet-group"
+  subnet_ids = data.aws_subnets.default_vpc_subnets.ids
+
+  tags = {
+    Name = "My Default VPC DB Subnet Group"
   }
 }
 
@@ -186,7 +197,7 @@ resource "aws_security_group_rule" "allow_alb_all_outbound" {
 resource "aws_lb" "load_balancer" {
   name               = "web-app-lb"
   load_balancer_type = "application"
-  subnets            = data.aws_subnets.default_subnet.ids
+  subnets            = data.aws_subnets.default_vpc_subnets.ids
   security_groups    = [aws_security_group.alb.id]
 
 }
@@ -222,4 +233,5 @@ resource "aws_db_instance" "db_instance" {
   username                   = "foo"
   password                   = "foobarbaz"
   skip_final_snapshot        = true
+  db_subnet_group_name = aws_db_subnet_group.default_vpc_db_subnet_group.name
 }
