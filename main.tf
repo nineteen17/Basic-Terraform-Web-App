@@ -1,7 +1,7 @@
 terraform {
   # Assumes s3 bucket and dynamo DB table already set up
   # See /code/03-basics/aws-backend
-  backend "remote" {
+  cloud {
     organization = "nineteen17"
 
     workspaces {
@@ -19,6 +19,12 @@ terraform {
 
 provider "aws" {
   region = "ap-southeast-2"
+
+  assume_role {
+    role_arn = "arn:aws:iam::287669651931:role/TerraformManagementRole"
+  }
+
+  shared_credentials_files = [var.AWS_CONFIG_FILE]
 }
 
 resource "aws_instance" "instance_1" {
@@ -68,9 +74,13 @@ data "aws_vpc" "default_vpc" {
   default = true
 }
 
-data "aws_subnet_ids" "default_subnet" {
-  vpc_id = data.aws_vpc.default_vpc.id
+data "aws_subnets" "default_subnet" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default_vpc.id]
+  }
 }
+
 
 resource "aws_security_group" "instances" {
   name = "instance-security-group"
@@ -181,7 +191,7 @@ resource "aws_security_group_rule" "allow_alb_all_outbound" {
 resource "aws_lb" "load_balancer" {
   name               = "web-app-lb"
   load_balancer_type = "application"
-  subnets            = data.aws_subnet_ids.default_subnet.ids
+  subnets            = data.aws_subnets.default_subnet.ids
   security_groups    = [aws_security_group.alb.id]
 
 }
@@ -213,7 +223,7 @@ resource "aws_db_instance" "db_instance" {
   engine                     = "postgres"
   engine_version             = "12"
   instance_class             = "db.t2.micro"
-  name                       = "mydb"
+  identifier                 = "mydb"
   username                   = "foo"
   password                   = "foobarbaz"
   skip_final_snapshot        = true
